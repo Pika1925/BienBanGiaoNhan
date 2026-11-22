@@ -1,4 +1,4 @@
-name: Build Windows EXE V4
+name: Build BienBanGiaoNhan V5
 on:
   push:
     branches: [main]
@@ -20,18 +20,18 @@ jobs:
         run: python -m py_compile app.py
       - name: Build GUI executable
         shell: cmd
-        run: pyinstaller --clean --noconfirm --onefile --windowed --name BienBanGiamDinh --add-data "template_190.docx;." --add-data "template_191.docx;." --collect-all docx app.py
+        run: pyinstaller --clean --noconfirm --onefile --windowed --name BienBanGiaoNhan --add-data "template_190.docx;." --add-data "template_191.docx;." --collect-all docx app.py
       - name: Build diagnostic executable
         shell: cmd
-        run: pyinstaller --clean --noconfirm --onefile --console --name BienBanGiamDinh_DEBUG --add-data "template_190.docx;." --add-data "template_191.docx;." --collect-all docx app.py
+        run: pyinstaller --clean --noconfirm --onefile --console --name BienBanGiaoNhan_DEBUG --add-data "template_190.docx;." --add-data "template_191.docx;." --collect-all docx app.py
       - name: Verify outputs
         shell: pwsh
         run: |
-          if (!(Test-Path dist/BienBanGiamDinh.exe)) { throw 'Missing GUI EXE' }
-          if (!(Test-Path dist/BienBanGiamDinh_DEBUG.exe)) { throw 'Missing debug EXE' }
+          if (!(Test-Path dist/BienBanGiaoNhan.exe)) { throw 'Missing GUI EXE' }
+          if (!(Test-Path dist/BienBanGiaoNhan_DEBUG.exe)) { throw 'Missing debug EXE' }
       - uses: actions/upload-artifact@v4
         with:
-          name: BienBanGiamDinh-V4-Windows
+          name: BienBanGiaoNhan-V5-Windows
           path: |
-            dist/BienBanGiamDinh.exe
-            dist/BienBanGiamDinh_DEBUG.exe
+            dist/BienBanGiaoNhan.exe
+            dist/BienBanGiaoNhan_DEBUG.exe

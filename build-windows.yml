@@ -1,0 +1,49 @@
+name: Build Windows EXE
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Validate source and templates
+        run: python -m unittest discover -s tests -v
+      - name: Build one-file EXE
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --name BienBanGiamDinh --add-data "template_190.docx;." --add-data "template_191.docx;." --collect-all docx app.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Smoke test executable startup and embedded templates
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "dist\BienBanGiamDinh.exe" -PassThru
+          Start-Sleep -Seconds 12
+          if ($p.HasExited) { throw "EXE exited unexpectedly with code $($p.ExitCode)" }
+          Stop-Process -Id $p.Id -Force
+      - name: Generate SHA256
+        shell: pwsh
+        run: |
+          (Get-FileHash "dist\BienBanGiamDinh.exe" -Algorithm SHA256).Hash | Out-File -Encoding ascii "dist\SHA256.txt"
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BienBanGiamDinh-Windows-x64
+          path: |
+            dist/BienBanGiamDinh.exe
+            dist/SHA256.txt
+          if-no-files-found: error
+          retention-days: 30

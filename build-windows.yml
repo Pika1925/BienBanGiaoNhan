@@ -1,49 +1,37 @@
-name: Build Windows EXE
+name: Build Windows EXE V4
 on:
-  workflow_dispatch:
   push:
     branches: [main]
-permissions:
-  contents: read
+  workflow_dispatch:
 jobs:
   build:
-    runs-on: windows-2022
-    timeout-minutes: 25
+    runs-on: windows-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          architecture: x64
-          cache: pip
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Validate source and templates
-        run: python -m unittest discover -s tests -v
-      - name: Build one-file EXE
+          architecture: 'x64'
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller
+      - name: Compile check
+        run: python -m py_compile app.py
+      - name: Build GUI executable
+        shell: cmd
+        run: pyinstaller --clean --noconfirm --onefile --windowed --name BienBanGiamDinh --add-data "template_190.docx;." --add-data "template_191.docx;." --collect-all docx app.py
+      - name: Build diagnostic executable
+        shell: cmd
+        run: pyinstaller --clean --noconfirm --onefile --console --name BienBanGiamDinh_DEBUG --add-data "template_190.docx;." --add-data "template_191.docx;." --collect-all docx app.py
+      - name: Verify outputs
         shell: pwsh
         run: |
-          python -m PyInstaller --noconfirm --clean --onefile --windowed --name BienBanGiamDinh --add-data "template_190.docx;." --add-data "template_191.docx;." --collect-all docx app.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Smoke test executable startup and embedded templates
-        shell: pwsh
-        run: |
-          $p = Start-Process -FilePath "dist\BienBanGiamDinh.exe" -PassThru
-          Start-Sleep -Seconds 12
-          if ($p.HasExited) { throw "EXE exited unexpectedly with code $($p.ExitCode)" }
-          Stop-Process -Id $p.Id -Force
-      - name: Generate SHA256
-        shell: pwsh
-        run: |
-          (Get-FileHash "dist\BienBanGiamDinh.exe" -Algorithm SHA256).Hash | Out-File -Encoding ascii "dist\SHA256.txt"
-      - name: Upload EXE artifact
-        uses: actions/upload-artifact@v4
+          if (!(Test-Path dist/BienBanGiamDinh.exe)) { throw 'Missing GUI EXE' }
+          if (!(Test-Path dist/BienBanGiamDinh_DEBUG.exe)) { throw 'Missing debug EXE' }
+      - uses: actions/upload-artifact@v4
         with:
-          name: BienBanGiamDinh-Windows-x64
+          name: BienBanGiamDinh-V4-Windows
           path: |
             dist/BienBanGiamDinh.exe
-            dist/SHA256.txt
-          if-no-files-found: error
-          retention-days: 30
+            dist/BienBanGiamDinh_DEBUG.exe

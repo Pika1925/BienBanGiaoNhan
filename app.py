@@ -56,7 +56,7 @@ def make_doc(kind,v,path):
 
 def password_gate(root):
  dlg=tk.Toplevel(root);dlg.title('Đăng nhập phần mềm');dlg.resizable(False,False)
- dlg.geometry('370x190');dlg.transient(root);dlg.grab_set()
+ dlg.geometry('370x190');dlg.lift();dlg.focus_force();dlg.grab_set()
  ttk.Label(dlg,text='NHẬP MẬT KHẨU SỬ DỤNG',font=('Arial',13,'bold')).pack(pady=(20,12))
  val=tk.StringVar();ent=ttk.Entry(dlg,textvariable=val,show='*',width=30);ent.pack();ent.focus_set()
  status=ttk.Label(dlg,text='',foreground='red');status.pack(pady=6)
@@ -118,17 +118,22 @@ class App:
    except Exception as e:messagebox.showerror('Lỗi xuất Word',str(e))
 if __name__=='__main__':
  try:
+  logdir=os.path.join(os.environ.get('LOCALAPPDATA',tempfile.gettempdir()),'BienBanGiamDinh')
+  os.makedirs(logdir,exist_ok=True)
+  with open(os.path.join(logdir,'startup.log'),'a',encoding='utf-8') as lf:
+   lf.write('Starting '+datetime.datetime.now().isoformat()+'\n')
   root=tk.Tk()
-  root.withdraw()
+  root.title('Đăng nhập - Biên bản giám định')
+  root.geometry('400x220')
+  root.update_idletasks()
   if password_gate(root):
-   root.deiconify()
    App(root)
    root.mainloop()
   else:
    root.destroy()
  except Exception:
   import tempfile
-  log=os.path.join(os.path.expanduser('~'),'Desktop','BienBanGiamDinh_LOI.txt')
+  log=os.path.join(os.environ.get('LOCALAPPDATA',tempfile.gettempdir()),'BienBanGiamDinh','BienBanGiamDinh_LOI.txt')
   try:
    with open(log,'w',encoding='utf-8') as f:f.write(traceback.format_exc())
   except Exception:
